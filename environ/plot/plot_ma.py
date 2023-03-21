@@ -43,9 +43,7 @@ def preprocess_ma(
     return df
 
 
-def plot_time_series(
-    df: pd.DataFrame, boom_bust: dict[str, list[tuple[int, int]]] = BOOM_BUST
-) -> None:
+def plot_time_series(df: pd.DataFrame, boom_bust: list[dict] = BOOM_BUST) -> None:
     """
     plot the time series
     """
@@ -54,10 +52,13 @@ def plot_time_series(
         plt.plot(df["time"], df["value"], color=COLOR_DICT[token], label=token)
 
     # plot boom bust cycles
-    for i in boom_bust["boom"]:
-        plt.axvspan(i[0], i[1], color="green", alpha=0.5)
-    for i in boom_bust["bust"]:
-        plt.axvspan(i[0], i[1], color="red", alpha=0.5)
+    for cycle in boom_bust:
+        plt.axvspan(
+            cycle["start"],
+            cycle["end"],
+            alpha=0.2,
+            color="red" if cycle["main_trend"] == "bust" else "green",
+        )
 
     # convert time to date
     date_format = md.DateFormatter("%Y-%m-%d")

@@ -1,15 +1,19 @@
-from os import path
-
+from pathlib import Path
 from environ.settings import PROJECT_ROOT
-from environ.utils.variable_constructer import name_boom_interact_var, name_lag_variable
 
 # google what is my user agent to get it
-USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
+USER_AGENT: str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
 
 
-FIGURE_PATH = path.join(PROJECT_ROOT, "figures")
-TABLE_PATH = path.join(PROJECT_ROOT, "tables")
-GLOBAL_DATA_PATH = path.join(PROJECT_ROOT, "data", "data_global")
+SAMPLE_PERIOD = [
+    "2020-07-01",
+    "2023-01-31",
+]
+
+FIGURE_PATH: Path = Path(PROJECT_ROOT) / "figures"
+TABLE_PATH: Path = Path(PROJECT_ROOT) / "tables"
+GLOBAL_DATA_PATH: Path = Path(PROJECT_ROOT) / "data" / "data_global"
+CACHE_PATH: Path = Path(PROJECT_ROOT) / ".cache"
 
 # Compound pool deployment time
 COMPOUND_DEPLOYMENT_DATE = [
@@ -108,10 +112,15 @@ COMPOUND_DEPLOYMENT_DATE = [
         "poolAddress": "0xface851a4921ce59e912d19329929ce6da6eb0c7",
         "Date": "2021-04-21 21:38:22",
     },
+    # {
+    #     "Token": "WBTC2",
+    #     "poolAddress": "0xccF4429DB6322D5C611ee964527D42E5d685DD6a",
+    #     "Date": "2021-03-14 07:44:47",
+    # },
     {
-        "Token": "WBTC2",
-        "poolAddress": "0xccF4429DB6322D5C611ee964527D42E5d685DD6a",
-        "Date": "2021-03-14 07:44:47",
+        "Token": "WBTC",
+        "poolAddress": "0xc11b1268c1a384e55c48c2391d8d480264a3a7f4",
+        "Date": "2019-07-16 19:47:37",
     },
 ]
 
@@ -140,7 +149,7 @@ STABLE_DICT = {
 # get all unique underling from stable_dict
 FIAT_LIST = list(set([v["underlying"] for v in STABLE_DICT.values()]))
 
-NAMING_DICT = {
+ALL_NAMING_DICT = {
     "TVL_share": "{\it LiquidityShare}",
     "Inflow_centrality": "{\it EigenCent}^{In}",
     "Outflow_centrality": "{\it EigenCent}^{Out}",
@@ -183,6 +192,7 @@ NAMING_DICT = {
     "pegging_degree_downpeg": "{\it PeggingDegree}^{Downpeg}",
     "depegging_degree_uppeg": "{\it DepeggingDegree}^{Uppeg}",
     "depegging_degree_downpeg": "{\it DepeggingDegree}^{Downpeg}",
+    "itlnMCapUSD": "{\it \ln MCap}^{USD}",
     "mcap_share": "{\it MCapShare}",
     "corr_sentiment": "{\it CorrSent}",
     "herfindahl_volume": "{\it HHIVolume}",
@@ -198,23 +208,8 @@ NAMING_DICT = {
     "S&P_log_return_vol_1_30": "{\it \sigma}^{USD}_{SP}",
     "depeg_pers": "{\it DepegPersist}",
     "is_boom": "{\it IsBoom}",
-}
-
-NAMING_DICT_LAG = {
-    name_lag_variable(k): "{" + v + "}_{t-1}" for k, v in NAMING_DICT.items()
-}
-
-
-# boom_naming_dict with NAMING_DICT and NAMING_DICT_LAG
-BOOM_INTERACTION_DICT = {
-    name_boom_interact_var(k): f"{v} : {NAMING_DICT['is_boom']}"
-    for k, v in {**NAMING_DICT_LAG, **NAMING_DICT}.items()
-}
-
-
-ALL_NAMING_DICT = {
-    k: "$" + v + "$"
-    for k, v in {**NAMING_DICT_LAG, **NAMING_DICT, **BOOM_INTERACTION_DICT}.items()
+    "after_treated_date": "{\it AfterTreatedDate}",
+    "is_treated_token": "{\it IsTreatedToken}",
 }
 
 NAMING_DICT_OLD = {
@@ -268,7 +263,8 @@ NAMING_DIC_PROPERTIES_OF_DOMINANCE = {
     "corr_sp": "${\it CorrSP}$",
     "corr_eth": "${\it CorrETH}$",
     "log_return": "${R}^{\it USD}$",
-    # "mcap": "${\it \ln MCap}^{USD}$",
+    "mcap": "${\it \ln MCap}^{USD}$",
+    "itlnMCapUSD": "${\it \ln MCap}^{USD}$",
     "Nonstable": "${\i Nonstable}$",
     "Stable": "${\i Stable}$",
     "IsWETH": "${\i IsWETH}$",

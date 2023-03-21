@@ -1,20 +1,25 @@
 # get the regression panel dataset from pickled file
 from itertools import product
-from pathlib import Path
+from typing import Literal, Optional
 
 import pandas as pd
-from linearmodels.panel import PanelOLS
 import statsmodels.api as sm
+from linearmodels.panel import PanelOLS
 
 from environ.constants import ALL_NAMING_DICT, TABLE_PATH
-from environ.utils.variable_constructer import lag_variable, name_lag_variable
+from environ.utils.caching import cache
+from environ.utils.variable_constructer import (
+    lag_variable,
+    map_variable_name_latex,
+    name_lag_variable,
+)
 
 REGRESSION_NAMING_DICT = {
     "r2": "$R^2$",
     "r2_within": "$R^2_{within}$",
     "nobs": "N",
-    "fe": "fixed effect",
-    "regressand": "Regressand",
+    "fe": "Fixed Effect",
+    "regressand": "Regresand",
 }
 
 
@@ -35,8 +40,8 @@ def regress(
     data: pd.DataFrame,
     dv: str = "Volume_share",
     iv: list[str] = ["is_boom", "mcap_share"],
-    # method can be "ols", or "panel"
-    method: str = "panel",
+    method: Literal["panel", "ols"] = "panel",
+    robust: bool = False,
 ):
     """
     Run the fixed-effect regression.
@@ -45,8 +50,11 @@ def regress(
         data (pd.DataFrame): The data to run the regression on.
         dv (str, optional): The dependent variable. Defaults to "Volume_share".
         iv (list[str], optional): The independent variables. Defaults to ["is_boom", "mcap_share"].
-        entity_effect (bool, optional): Whether to include entity effect. Defaults to True.
     """
+    # if method not in ["ols", "panel"], raise f"method {method} must be either 'ols' or 'panel'"
+    if method not in ["ols", "panel"]:
+        raise ValueError(f"method {method} must be either 'ols' or 'panel'")
+
     # Define the dependent variable
     dependent_var = data[dv]
 
@@ -55,27 +63,44 @@ def regress(
 
     # Run the fixed-effect regression
     # catch error and print y and X
-    if method == "panel":
-        model = PanelOLS(
-            dependent_var,
-            independent_var,
-            entity_effects=fix_effect(iv),
-            drop_absorbed=True,
-            check_rank=False,
-        ).fit()
-    elif method == "ols":
-        model = sm.OLS(dependent_var, independent_var, missing="drop").fit()
-    else:
-        raise ValueError(f"method {method} must be either 'ols' or 'panel'")
-    return model
+    @cache(ttl=60 * 60 * 24 * 7, min_memory_time=0.00001, min_disk_time=0.1)
+    def regression(
+        dependent_var: pd.Series,
+        independent_var: pd.DataFrame,
+        method: str,
+        robust: bool,
+    ):
+        # TODO: check robustness of the regression
+        if method == "panel":
+            model = PanelOLS(
+                dependent_var,
+                independent_var,
+                entity_effects=fix_effect(iv),
+                drop_absorbed=True,
+                check_rank=False,
+            )
+            if robust:
+                model_fit = model.fit(cov_type="kernel", kernel="newey-west")
+            else:
+                model_fit = model.fit()
+        else:
+            model = sm.OLS(dependent_var, independent_var, missing="drop")
+            if robust:
+                model_fit = model.fit(cov_type="HAC", cov_kwds={"maxlags": 1})
+            else:
+                model_fit = model.fit()
+        return model_fit
+
+    return regression(dependent_var, independent_var, method, robust)
 
 
 def render_regression_column(
     data: pd.DataFrame,
     dv: str,
     iv: list[str],
-    method: str = "panel",
+    method: Literal["panel", "ols"] = "panel",
     standard_beta: bool = False,
+    **kwargs,
 ) -> pd.Series:
     """
     Render the regression column.
@@ -90,7 +115,7 @@ def render_regression_column(
     Returns:
         pd.Series: The regression column.
     """
-    regression_result = regress(data=data, dv=dv, iv=iv, method=method)
+    regression_result = regress(data=data, dv=dv, iv=iv, method=method, **kwargs)
 
     # merge three pd.Series: regression_result.params, regression_result.std_errors, regression_result.pvalues into one dataframe
     result_column = pd.Series({"regressand": dv})
@@ -104,13 +129,13 @@ def render_regression_column(
 
     for i, v in regression_result.params.items():
         # format v to exactly 3 decimal places
-        beta = "{:.3f}".format(v)
+        beta = "{:.4f}".format(v)
         # add * according to p-value
         pvalue = regression_result.pvalues[i]
         star = f"{{{'***' if pvalue < 0.01 else '**' if pvalue < 0.05 else '*' if pvalue < 0.1 else ''}}}"
         # add standard error
         line1 = f"${beta}^{star}$"
-        line2 = f"(${line2_items[i] * v**standard_beta :.3f}$)"
+        line2 = f"(${line2_items[i] * v**standard_beta :.4f}$)"
 
         result_column[i] = rf"{line1} \\ {line2}"
 
@@ -148,8 +173,7 @@ def construct_regress_vars(
             [
                 [
                     name_lag_variable(v)
-                    if v not in ["Stable", "is_boom", "const"]
-                    and v in list(ALL_NAMING_DICT.keys())
+                    if v not in ["Stable", "is_boom", "const"] and v in ALL_NAMING_DICT
                     else v
                     for v in iv
                 ]
@@ -176,7 +200,7 @@ def construct_regress_vars(
 def render_regress_table(
     reg_panel: pd.DataFrame,
     reg_combi: list[tuple[str, list[str]]],
-    lag_dv: str = "$\it Dominance_{t-1}$",
+    lag_dv: Optional[str] = None,
     **kargs,
     # method: str = "panel",
 ) -> pd.DataFrame:
@@ -187,7 +211,7 @@ def render_regress_table(
         reg_panel (pd.DataFrame): The data to run the regression on.
         file_name (str): The file suffix of the regression table in latex.
         reg_combi (list[tuple[str, list[str]]]): The list of regressand and independent variables.
-        lag_dv (str, optional): The name of the lagged dependent variable. Defaults to "$\it Dominance_{t-1}$".
+        lag_dv (str, optional): The name of the lagged dependent variable.
 
     Returns:
         pd.DataFrame: The regression table.
@@ -198,7 +222,6 @@ def render_regress_table(
     # initiate all_ivs set
     all_ivs = []
     for dv, ivs in reg_combi:
-        lag_dv_name = name_lag_variable(dv)
         result_column = render_regression_column(
             reg_panel,
             dv,
@@ -206,11 +229,13 @@ def render_regress_table(
             **kargs,
         )
         # rename result_column index
-        result_column = result_column.rename(
-            index={
-                lag_dv_name: lag_dv,
-            }
-        )
+        if lag_dv:
+            lag_dv_name = name_lag_variable(dv)
+            result_column = result_column.rename(
+                index={
+                    lag_dv_name: lag_dv,
+                }
+            )
         result_column["regressand"] = dv
 
         counter += 1
@@ -222,7 +247,6 @@ def render_regress_table(
         all_ivs.extend([x for x in ivs if x not in all_ivs])
 
     # reorder rows in result_table, include only rows in index already
-
     rows = [
         x
         for x in (
@@ -244,54 +268,63 @@ def render_regress_table(
 
 
 def render_regress_table_latex(
-    result_table: pd.DataFrame, file_name: str = "test", method: str = "panel"
+    result_table: pd.DataFrame,
+    file_name: str = "test",
+    method: Literal["panel", "ols"] = "panel",
 ) -> pd.DataFrame:
     """
     Render the regression table in latex.
     """
 
-    result_table_latex = result_table.rename(index=ALL_NAMING_DICT)
-    # rename each cell in the "regressand" row with ALL_NAMING_DICT[xxx]
-    result_table_latex.loc["regressand"] = result_table_latex.loc["regressand"].map(
-        ALL_NAMING_DICT
+    # map index with map_variable_name_latex, for index from line 2 to 4th last row
+    result_table_latex = result_table.copy()
+    result_table_latex.index = result_table_latex.index.map(
+        lambda x: x if x in REGRESSION_NAMING_DICT else map_variable_name_latex(x)
     )
+
+    # rename 'regressand' row
+    result_table_latex.loc["regressand"] = result_table_latex.loc["regressand"].map(
+        map_variable_name_latex
+    )
+
     result_table_latex.rename(index=REGRESSION_NAMING_DICT, inplace=True)
 
-    iv_end = -3 if method == "panel" else -2
+    iv_end = -2  # if method == "ols" else -3
+
     # for each cell from row 2 to 4th last row, add \makecell{xx} to make the cell wrap
     for row in result_table_latex.index[1:iv_end]:
         for col in result_table_latex.columns:
             result_table_latex.loc[
                 row, col
             ] = f"\\makecell{{{result_table_latex.loc[row, col]}}}"
-    # add \midrule to the 4th last row
+
     original_index = result_table_latex.index[iv_end]
     result_table_latex = result_table_latex.rename(
         index={original_index: f"\\midrule {original_index}"}
     )
+
     result_table_latex.to_latex(
-        Path(TABLE_PATH) / f"regression_table_{file_name}.tex", escape=False
+        TABLE_PATH / f"regression_table_{file_name}.tex", escape=False
     )
     return result_table_latex
 
 
 if __name__ == "__main__":
-
     # Get the regression panel dataset from pickled file
-    reg_panel = pd.read_pickle(Path(TABLE_PATH) / "reg_panel.pkl")
+    reg_panel = pd.read_pickle(TABLE_PATH / "reg_panel.pkl")
 
-    # Lag all variable except the Date and Token
-    for variable in reg_panel.columns:
-        if variable not in ["Date", "Token"]:
-            reg_panel = lag_variable(reg_panel, variable, "Date", "Token")
-
+    dvs = ["Volume_share", "avg_eigenvector_centrality"]
+    ivs = [[["corr_eth"]], [["Stable"], ["std", "Stable"]]]
     reg_combi = construct_regress_vars(
-        dependent_variables=["Volume_share", "avg_eigenvector_centrality"],
-        iv_chunk_list=[[["corr_eth"]], [["Stable"], ["std", "Stable"]]],
+        dependent_variables=dvs,
+        iv_chunk_list=ivs,
         lag_iv=True,
         with_lag_dv=False,
         without_lag_dv=False,
     )
+
+    ivs_unique = list(set([w for y in ivs for x in y for w in x]))
+    reg_panel = lag_variable(reg_panel, dvs + ivs_unique, "Date", "Token")
 
     result_full = render_regress_table(
         reg_panel=reg_panel,
