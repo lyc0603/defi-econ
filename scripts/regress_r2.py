@@ -1,21 +1,16 @@
 # get the regression panel dataset from pickled file
-from pathlib import Path
 
 import pandas as pd
 
-from environ.constants import TABLE_PATH
+from environ.constants import DATA_PATH, TABLE_PATH
 from environ.tabulate.render_regression import (
     construct_regress_vars,
     render_regress_table,
     render_regress_table_latex,
 )
-from environ.utils.variable_constructer import (
-    lag_variable,
-    name_interaction_variable,
-    name_lag_variable,
-)
 
-reg_panel = pd.read_pickle(Path(TABLE_PATH) / "reg_panel.pkl")
+
+reg_panel = pd.read_pickle(DATA_PATH / "processed" / "reg_panel_merged.pkl")
 
 
 dependent_variables = [
@@ -28,8 +23,10 @@ for dv in dependent_variables:
 
 
 iv_chunk_list_unlagged = [
-    [["betweenness_centrality_count"], ["betweenness_centrality_volume"]],
-    [[], ["avg_eigenvector_centrality"]],
+    [[], ["vol_inter_full_len_share"]],
+    [[], ["vol_undirected_full_len_share"]],
+    # [["betweenness_centrality_count"], ["betweenness_centrality_volume"]],
+    # [[], ["eigen_centrality_undirected"]],
 ]
 
 
@@ -46,11 +43,10 @@ reg_combi_interact = construct_regress_vars(
 result_r2 = render_regress_table(
     reg_panel=reg_panel,
     reg_combi=reg_combi_interact,
-    method="ols",
     standard_beta=False,
     robust=False,
 )
 
-result_full_latex_interact = render_regress_table_latex(
-    result_table=result_r2, file_name="full_vshare", method="ols"
+result_latex = render_regress_table_latex(
+    result_table=result_r2, file_name=TABLE_PATH / "full_vshare"
 )

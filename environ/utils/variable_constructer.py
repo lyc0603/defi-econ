@@ -2,7 +2,7 @@
 This module contains functions to construct variables in preparation for regression.
 """
 
-from typing import Any, Callable, Iterable, Optional, Union
+from typing import Any, Callable, Iterable
 
 import numpy as np
 import pandas as pd
@@ -36,6 +36,13 @@ def name_log_return_variable(variable: str, rolling_window_return: int) -> str:
     name the log return variable
     """
     return f"{variable}_log_return_{rolling_window_return}"
+
+
+def name_ma_variable(variable: str, rolling_window_ma: int) -> str:
+    """
+    name the moving average variable
+    """
+    return f"{variable}_ma_{rolling_window_ma}"
 
 
 def name_log_return_vol_variable(
@@ -91,11 +98,11 @@ def map_variable_name_latex(variable: str) -> str:
 
 def column_manipulator(
     data: pd.DataFrame,
-    variable: Union[str, Iterable[str]],
+    variable: str | Iterable[str],
     summary_func: Callable[[pd.Series], Any],
     new_col_name_func: Callable[[str], str],
     time_variable: str = "Date",
-    entity_variable: Optional[str] = None,
+    entity_variable: str | None = None,
 ) -> pd.DataFrame:
     """
     Manipulate the columns of a dataframe.
@@ -113,11 +120,11 @@ def column_manipulator(
     return data
 
 
-def diff_variable(
+def diff_variable_columns(
     data: pd.DataFrame,
-    variable: Union[str, Iterable[str]],
+    variable: str | Iterable[str],
     time_variable: str = "Date",
-    entity_variable: Optional[str] = None,
+    entity_variable: str | None = None,
     lag: int = 1,
 ) -> pd.DataFrame:
     """
@@ -134,11 +141,11 @@ def diff_variable(
     )
 
 
-def lag_variable(
+def lag_variable_columns(
     data: pd.DataFrame,
-    variable: Union[str, Iterable[str]],
+    variable: str | Iterable[str],
     time_variable: str = "Date",
-    entity_variable: Optional[str] = None,
+    entity_variable: str | None = None,
     lag: int = 1,
 ) -> pd.DataFrame:
     """
@@ -155,9 +162,32 @@ def lag_variable(
     )
 
 
+def ma_variable_columns(
+    data: pd.DataFrame,
+    variable: str | Iterable[str],
+    time_variable: str = "Date",
+    entity_variable: str | None = None,
+    rolling_window_ma: int = 1,
+) -> pd.DataFrame:
+    """
+    Calculate the moving average of the variable.
+    """
+
+    return column_manipulator(
+        data=data,
+        variable=variable,
+        summary_func=lambda x: x.rolling(rolling_window_ma).mean(),
+        new_col_name_func=lambda x: name_ma_variable(
+            x, rolling_window_ma=rolling_window_ma
+        ),
+        time_variable=time_variable,
+        entity_variable=entity_variable,
+    )
+
+
 def log_return(
     data: pd.DataFrame,
-    variable: Union[str, Iterable[str]],
+    variable: str | Iterable[str],
     time_variable: str = "Date",
     rolling_window_return: int = 1,
 ) -> pd.DataFrame:
