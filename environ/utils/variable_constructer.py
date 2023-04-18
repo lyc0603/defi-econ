@@ -54,6 +54,13 @@ def name_log_return_vol_variable(
     return f"{variable}_log_return_vol_{rolling_window_return}_{rolling_window_vol}"
 
 
+def name_share_variable(variable: str) -> str:
+    """
+    name the share variable
+    """
+    return f"{variable}_share"
+
+
 def map_variable_name_latex(variable: str) -> str:
     """
     Map the variable name to its corresponding LaTeX representation.
@@ -102,7 +109,7 @@ def column_manipulator(
     summary_func: Callable[[pd.Series], Any],
     new_col_name_func: Callable[[str], str],
     time_variable: str = "Date",
-    entity_variable: str | None = None,
+    group_variable: str | None = None,
 ) -> pd.DataFrame:
     """
     Manipulate the columns of a dataframe.
@@ -110,13 +117,13 @@ def column_manipulator(
     data = data.sort_values(by=time_variable)
 
     # Group by entity_variable if it is provided, otherwise use the whole panel_data as a group
-    groupby = data.groupby(entity_variable) if entity_variable else data
+    grouped_df = data.groupby(group_variable) if group_variable else data
 
     if isinstance(variable, str):
         variable = [variable]
 
     for var in variable:
-        data[new_col_name_func(var)] = groupby[var].transform(summary_func)
+        data[new_col_name_func(var)] = grouped_df[var].transform(summary_func)
     return data
 
 
@@ -137,7 +144,7 @@ def diff_variable_columns(
         summary_func=lambda x: x.diff(lag),
         new_col_name_func=lambda x: name_diff_variable(x, lag=lag),
         time_variable=time_variable,
-        entity_variable=entity_variable,
+        group_variable=entity_variable,
     )
 
 
@@ -158,7 +165,27 @@ def lag_variable_columns(
         summary_func=lambda x: x.shift(lag),
         new_col_name_func=lambda x: name_lag_variable(x, lag=lag),
         time_variable=time_variable,
-        entity_variable=entity_variable,
+        group_variable=entity_variable,
+    )
+
+
+def share_variable_columns(
+    data: pd.DataFrame,
+    variable: str | Iterable[str],
+    time_variable: str = "Date",
+    entity_variable: str | None = "Date",
+) -> pd.DataFrame:
+    """
+    Calculate the share of the variable.
+    """
+
+    return column_manipulator(
+        data=data,
+        variable=variable,
+        summary_func=lambda x: x / x.sum(),
+        new_col_name_func=name_share_variable,
+        time_variable=time_variable,
+        group_variable=entity_variable,
     )
 
 
@@ -181,7 +208,7 @@ def ma_variable_columns(
             x, rolling_window_ma=rolling_window_ma
         ),
         time_variable=time_variable,
-        entity_variable=entity_variable,
+        group_variable=entity_variable,
     )
 
 
@@ -238,24 +265,95 @@ def return_vol(
     return data
 
 
+def log_return_panel(
+    data: pd.DataFrame,
+    variable: str,
+    output_variable: str,
+    entity_variable: str = "Token",
+    time_variable: str = "Date",
+    rolling_window_return: int = 1,
+) -> pd.DataFrame:
+    """
+    Calculate the log return of the panel variable
+    """
+
+    data = data.sort_values(by=time_variable, ascending=True)
+
+    # # fill the missing values with the previous value with linear interpolation
+    # data[variable] = data.groupby(entity_variable)[variable].fillna(method="ffill")
+
+    # handle 0
+    # first replace 0 with nan
+    data[variable].replace(0, np.nan, inplace=True)
+
+    # data.groupby(variable).apply(lambda group: group.interpolate(method="linear"))
+
+    data[output_variable] = data.groupby(entity_variable)[variable].transform(
+        lambda x: np.log(x / x.shift(rolling_window_return))
+    )
+
+    return data
+
+
+def return_vol_panel(
+    data: pd.DataFrame,
+    variable: str,
+    output_variable: str,
+    entity_variable: str = "Token",
+    time_variable: str = "Date",
+    rolling_window_vol: int = 4,
+) -> pd.DataFrame:
+    """
+    Calculate the volatility of the variable.
+    """
+
+    # sort the data by "Token" and "Date
+    data = data.sort_values(by=[entity_variable, time_variable])
+
+    data[output_variable] = (
+        data.groupby(entity_variable)[variable]
+        .rolling(rolling_window_vol)
+        .std()
+        .reset_index(0, drop=True)
+    )
+
+    return data
+
+
 if __name__ == "__main__":
     # create a dummy dataset
-    dummy_data = pd.DataFrame(
+    # dummy_data = pd.DataFrame(
+    #     {
+    #         "Date": pd.date_range("2020-01-01", "2020-01-20").append(
+    #             pd.date_range("2020-02-01", "2020-02-10")
+    #         ),
+    #         "price1": [1, 2, 0, 4, 5, 6, 0, 0, 9, 10] * 3,
+    #         "price2": [10, 9, 8, 7, 6, 5, 4, 3, 2, 1] * 3,
+    #     }
+    # )
+
+    # new_data = log_return(dummy_data, "price1", "Date", 2)
+    # new_data = return_vol(new_data, "price1", 2, 6)
+    # var_name = name_interaction_variable(
+    #     name_interaction_variable(
+    #         name_log_return_vol_variable("price1", 2, 6), name_lag_variable("price2", 1)
+    #     ),
+    #     name_lag_variable("price2", 2),
+    # )
+    # map_variable_name_latex(variable=var_name)
+
+    # create a dummy panel dataset
+    dummy_data_panel = pd.DataFrame(
         {
             "Date": pd.date_range("2020-01-01", "2020-01-20").append(
                 pd.date_range("2020-02-01", "2020-02-10")
             ),
-            "price1": [1, 2, 0, 4, 5, 6, 0, 0, 9, 10] * 3,
+            "price1": [1, 3, 0, 1, 1, 1, 0, 0, 1, np.nan] * 3,
             "price2": [10, 9, 8, 7, 6, 5, 4, 3, 2, 1] * 3,
+            "entity": ["a", "a", "a", "a", "a", "b", "b", "b", "b", "b"] * 3,
         }
     )
 
-    new_data = log_return(dummy_data, "price1", "Date", 2)
-    new_data = return_vol(new_data, "price1", 2, 6)
-    var_name = name_interaction_variable(
-        name_interaction_variable(
-            name_log_return_vol_variable("price1", 2, 6), name_lag_variable("price2", 1)
-        ),
-        name_lag_variable("price2", 2),
+    print(
+        log_return_panel(dummy_data_panel, "price1", "log_return", "entity", "Date", 1)
     )
-    map_variable_name_latex(variable=var_name)

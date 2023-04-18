@@ -7,7 +7,11 @@ from pathlib import Path
 from environ.settings import PROJECT_ROOT
 
 # google what is my user agent to get it
-USER_AGENT: str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
+USER_AGENT: str = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    + "AppleWebKit/537.36 (KHTML, like Gecko) "
+    + "Chrome/111.0.0.0 Safari/537.36"
+)
 
 
 SAMPLE_PERIOD = [
@@ -19,72 +23,136 @@ KEY_TOKEN_LIST = ["WETH", "WBTC", "MATIC", "USDC", "USDT", "DAI", "FEI"]
 
 EVENT_DATE_LIST = ["2020-11-26", "2021-05-05", "2022-05-10", "2022-11-11"]
 
-FIGURE_PATH: Path = Path(PROJECT_ROOT) / "figures"
-TABLE_PATH: Path = Path(PROJECT_ROOT) / "tables"
-DATA_PATH: Path = Path(PROJECT_ROOT) / "data"
-GLOBAL_DATA_PATH: Path = Path(PROJECT_ROOT) / "data" / "data_global"
-BETWEENNESS_DATA_PATH: Path = Path(PROJECT_ROOT) / "data" / "data_betweenness"
-NETWORK_DATA_PATH: Path = Path(PROJECT_ROOT) / "data" / "data_network"
-PLOT_DATA_PATH: Path = Path(PROJECT_ROOT) / "data" / "data_plot"
-COMPOUND_DATA_PATH: Path = Path(PROJECT_ROOT) / "data" / "data_compound"
-CACHE_PATH: Path = Path(PROJECT_ROOT) / ".cache"
-TEST_RESULT_PATH: Path = Path(PROJECT_ROOT) / "test_results"
+FIGURE_PATH: Path = PROJECT_ROOT / "figures"
+TABLE_PATH: Path = PROJECT_ROOT / "tables"
+DATA_PATH: Path = PROJECT_ROOT / "data"
+PROCESSED_DATA_PATH: Path = PROJECT_ROOT / "processed_data"
+GLOBAL_DATA_PATH: Path = PROJECT_ROOT / "data" / "data_global"
+BETWEENNESS_DATA_PATH: Path = PROJECT_ROOT / "data" / "data_betweenness"
+NETWORK_DATA_PATH: Path = PROJECT_ROOT / "data" / "data_network"
+PLOT_DATA_PATH: Path = PROJECT_ROOT / "data" / "data_plot"
+COMPOUND_DATA_PATH: Path = PROJECT_ROOT / "data" / "data_compound"
+CACHE_PATH: Path = PROJECT_ROOT / ".cache"
+TEST_RESULT_PATH: Path = PROJECT_ROOT / "test_results"
 
 # Information fo variables to be merged into the main panel
-PANEL_VAR_INFO = [
-    {
-        "data_path": NETWORK_DATA_PATH / "merged" / "volume_share",
-        "data_col": ["Volume_share"],
-        "rename_dict": {"Volume": "Volume_share"},
-    },
-    {
-        "data_path": NETWORK_DATA_PATH / "merged" / "volume_in_share",
-        "data_col": ["volume_in_share"],
-        "rename_dict": {"Volume": "volume_in_share"},
-    },
-    {
-        "data_path": NETWORK_DATA_PATH / "merged" / "volume_out_share",
-        "data_col": ["volume_out_share"],
-        "rename_dict": {"Volume": "volume_out_share"},
-    },
-    {
-        "data_path": NETWORK_DATA_PATH / "merged" / "tvl_share",
-        "data_col": ["TVL_share"],
-        "rename_dict": {"total_tvl": "TVL_share", "token": "Token"},
-    },
-    {
-        "data_path": NETWORK_DATA_PATH / "merged" / "inflow_centrality",
-        "data_col": ["Inflow_centrality"],
-        "rename_dict": {
-            "eigenvector_centrality": "Inflow_centrality",
-            "token": "Token",
+PANEL_VAR_INFO = {
+    "panel_var": [
+        {
+            "data_path": NETWORK_DATA_PATH / "merged" / "volume_total",
+            "data_col": ["Volume"],
+            "rename_dict": {"Volume": "Volume"},
         },
-    },
-    {
-        "data_path": NETWORK_DATA_PATH / "merged" / "outflow_centrality",
-        "data_col": ["Outflow_centrality"],
-        "rename_dict": {
-            "eigenvector_centrality": "Outflow_centrality",
-            "token": "Token",
+        {
+            "data_path": NETWORK_DATA_PATH / "merged" / "inflow_centrality",
+            "data_col": ["Inflow_centrality"],
+            "rename_dict": {
+                "eigenvector_centrality": "Inflow_centrality",
+                "token": "Token",
+            },
         },
-    },
-    {
-        "data_path": COMPOUND_DATA_PATH / "processed",
-        "data_col": ["Borrow_share", "Supply_share"],
-        "rename_dict": {
-            "borrow_share": "Borrow_share",
-            "supply_share": "Supply_share",
+        {
+            "data_path": NETWORK_DATA_PATH / "merged" / "outflow_centrality",
+            "data_col": ["Outflow_centrality"],
+            "rename_dict": {
+                "eigenvector_centrality": "Outflow_centrality",
+                "token": "Token",
+            },
         },
+        {
+            "data_path": NETWORK_DATA_PATH / "merged" / "tvl",
+            "data_col": ["TVL"],
+            "rename_dict": {"total_tvl": "TVL", "token": "Token"},
+        },
+        {
+            "data_path": NETWORK_DATA_PATH / "merged" / "volume_in",
+            "data_col": ["volume_in"],
+            "rename_dict": {"Volume": "volume_in"},
+        },
+        {
+            "data_path": NETWORK_DATA_PATH / "merged" / "volume_out",
+            "data_col": ["volume_out"],
+            "rename_dict": {"Volume": "volume_out"},
+        },
+        {
+            "data_path": COMPOUND_DATA_PATH / "processed",
+            "data_col": ["Borrow_share", "Supply_share"],
+            "rename_dict": {
+                "borrow_share": "Borrow_share",
+                "supply_share": "Supply_share",
+            },
+        },
+        {
+            "data_path": NETWORK_DATA_PATH / "merged" / "betweenness",
+            "data_col": [
+                "betweenness_centrality_count",
+                "betweenness_centrality_volume",
+            ],
+            "rename_dict": {"node": "Token"},
+        },
+        {
+            "data_path": NETWORK_DATA_PATH / "merged" / "vol_in_full_len",
+            "data_col": ["vol_in_full_len"],
+            "rename_dict": {
+                "volume": "vol_in_full_len",
+            },
+        },
+        {
+            "data_path": NETWORK_DATA_PATH / "merged" / "vol_out_full_len",
+            "data_col": ["vol_out_full_len"],
+            "rename_dict": {
+                "volume": "vol_out_full_len",
+            },
+        },
+        {
+            "data_path": NETWORK_DATA_PATH / "merged" / "vol_inter_full_len",
+            "data_col": ["vol_inter_full_len"],
+            "rename_dict": {
+                "volume": "vol_inter_full_len",
+            },
+        },
+        {
+            "data_path": NETWORK_DATA_PATH / "merged" / "eigen_centrality_undirected",
+            "data_col": ["eigen_centrality_undirected"],
+            "rename_dict": {
+                "eigenvector_centrality": "eigen_centrality_undirected",
+            },
+        },
+    ],
+    "corr_var": {
+        "corr_gas": "gas_price_usd",
+        "corr_eth": "ether_price_usd",
+        "corr_sp": "S&P",
     },
-]
+    "share_var": [
+        "Volume",
+        "TVL",
+        "volume_in",
+        "volume_out",
+        "vol_in_full_len",
+        "vol_out_full_len",
+        "vol_inter_full_len",
+        "volume_ultimate",
+        "mcap",
+    ],
+}
+
+# Information fo variables to be merged into the herfindal pane;
+HERFIN_VAR_INFO = {
+    "volume_ultimate_share": "herfindahl_volume_ultimate",
+    "betweenness_centrality_count": "herfindahl_betweenness_centrality_count",
+    "betweenness_centrality_volume": "herfindahl_betweenness_centrality_volume",
+    "vol_inter_full_len_share": "herfindahl_vol_inter_full_len",
+    "Volume_share": "herfindahl_volume",
+}
 
 DEPENDENT_VARIABLES = [
-    "vol_undirected_full_len_share",
+    "volume_ultimate",
     "eigen_centrality_undirected",
     "vol_inter_full_len_share",
     "betweenness_centrality_volume",
     "betweenness_centrality_count",
-    # "Volume_share",
+    "Volume_share",
 ]
 
 # Aave pool deployment time
@@ -346,17 +414,19 @@ ALL_TOKEN_DICT = {**STABLE_DICT, **TOKEN_PLOT_DICT}
 FIAT_LIST = list(set([v["underlying"] for v in STABLE_DICT.values()]))
 
 ALL_NAMING_DICT = {
-    "eigen_centrality_undirected": "{\it EigenCent}^{Full}",
+    "eigen_centrality_undirected": "{\it EigenCent^{\it Ulti}}",
     "TVL_share": "{\it LiquidityShare}",
     "Inflow_centrality": "{\it EigenCent}^{In}",
     "Outflow_centrality": "{\it EigenCent}^{Out}",
-    "Volume_share": "{\it VShare}^{\it full}",
+    "Volume_share": "{\it VShare}",
     "volume_in_share": "{\it VShare}^{\it In}",
     "volume_out_share": "{\it VShare}^{\it Out}",
+    "volume_ultimate": "{\it {VShare}^{\it Ulti}}",
+    # "volume_
     "Borrow_share": "{\it BorrowShare}",
     "Supply_share": "{\it SupplyShare}",
-    "betweenness_centrality_count": "{\it BetwCent}^C",
-    "betweenness_centrality_volume": "{\it BetwCent}^V",
+    "betweenness_centrality_count": "{\it BetwCent}^{\it E}",
+    "betweenness_centrality_volume": "{\it BetwCent}^{\it V}",
     "cov_gas": "{\it CovGas}",
     "cov_sp": "{\it CovSP}",
     "cov_eth": "{\it CovETH}",
@@ -392,12 +462,14 @@ ALL_NAMING_DICT = {
     "itlnMCapUSD": "{\it \ln MCap}^{USD}",
     "mcap_share": "{\it MCapShare}",
     "corr_sentiment": "{\it CorrSent}",
-    "herfindahl_volume": "{\it HHI_{VolumeShare}}",
+    "herfindahl_volume": "{\it HHI_{VShare}}",
     "herfindahl_inflow_centrality": "{\it HHIEigenCent}^{In}",
     "herfindahl_outflow_centrality": "{\it HHIEigenCent}^{Out}",
-    "herfindahl_betweenness_centrality_count": "{\it HHI_{{BetwCent}^C}}",
-    "herfindahl_betweenness_centrality_volume": "{\it HHI_{{BetwCent}^V}}",
+    "herfindahl_betweenness_centrality_count": "{\it HHI_{{BetwCent}^{\it E}}}",
+    "herfindahl_betweenness_centrality_volume": "{\it HHI_{{BetwCent}^{\it V}}}",
     "herfindahl_tvl": "{\it HHI_{LiquidityShare}}",
+    "herfindahl_volume_ultimate": "{\it HHI_{{VShare}^{\it Ulti}}}",
+    "herfindahl_vol_inter_full_len": "{\it HHI_{{VShare}^{\it Betw}}}",
     "total_volumes": "{\it MarketVolume}",
     "S&P": "{\it R}^{USD}_{SP}",
     # TODO: to be removed
@@ -408,204 +480,7 @@ ALL_NAMING_DICT = {
     "after_treated_date": "{\it AfterTreatedDate}",
     "is_treated_token": "{\it IsTreatedToken}",
     "avg_cluster": "{\it AvgClustCoef}",
-    "vol_undirected_full_len_share": "{\it VShare}^{\it ulti}",
-    "vol_inter_full_len_share": "{\it VShare}^{\it betw}",
-}
-
-NAMING_DICT_OLD = {
-    "TVL_share": "${\it LiquidityShare}$",
-    "Inflow_centrality": "${\it EigenCent}^{In}$",
-    "Outflow_centrality": "${\it EigenCent}^{Out}$",
-    "Volume_share": "${\it VShare}$",
-    "volume_in_share": "${\it VShare}^{\it In}$",
-    "volume_out_share": "${\it VShare}^{\it Out}$",
-    "Borrow_share": "${\it BorrowShare}$",
-    "Supply_share": "${\it SupplyShare}$",
-    "betweenness_centrality_count": "${\it BetwCent}^C$",
-    "betweenness_centrality_volume": "${\it BetwCent}^V$",
-    "cov_gas": "${\it CovGas}$",
-    "cov_sp": "${\it CovSP}$",
-    "cov_eth": "${\it CovETH}$",
-    "log_return": "${R}^{\it USD}$",
-    "std": "${\it \sigma}^{USD}$",
-    "borrow_rate": "${\it BorrowAPY}^{USD}$",
-    "supply_rates": "${\it SupplyAPY}^{USD}$",
-    # "is_boom": "${\it Boom}$",
-    # "cor_sp": "${\it CorSP}$",
-    # "cor_eth": "${\it CorETH}$",
-    # "cor_gas": "${\it CorGas}$",
-    # "price": "${\it Price}$",
-    # "market_cap": "${\it MarketCap}$",
-}
-
-
-NAMING_DIC_PROPERTIES_OF_DOMINANCE = {
-    # Dominance
-    "Volume_share": "${\it VShare}$",
-    "volume_in_share": "${\it VShare}^{\it In}$",
-    "volume_out_share": "${\it VShare}^{\it Out}$",
-    # Eigenvector
-    "Inflow_centrality": "${\it EigenCent}^{In}$",
-    "Outflow_centrality": "${\it EigenCent}^{Out}$",
-    # Betweenness
-    "betweenness_centrality_count": "${\it BetwCent}^C$",
-    "betweenness_centrality_volume": "${\it BetwCent}^V$",
-    # Store
-    "Borrow_share": "${\it BorrowShare}$",
-    "Supply_share": "${\it SupplyShare}$",
-    "borrow_rate": "${\it BorrowAPY}^{USD}$",
-    "supply_rates": "${\it SupplyAPY}^{USD}$",
-    "beta": "${\it Beta}$",
-    "std": "${\it \sigma}^{USD}$",
-    "average_return": "${\it \mu}^{USD}$",
-    # Other
-    "corr_gas": "${\it CorrGas}$",
-    "corr_sp": "${\it CorrSP}$",
-    "corr_eth": "${\it CorrETH}$",
-    "log_return": "${R}^{\it USD}$",
-    "mcap": "${\it \ln MCap}^{USD}$",
-    "itlnMCapUSD": "${\it \ln MCap}^{USD}$",
-    "Nonstable": "${\i Nonstable}$",
-    "Stable": "${\i Stable}$",
-    "IsWETH": "${\i IsWETH}$",
-    "Gas_fee": "${\it GasPrice}$",
-    "dollar_exchange_rate": "${\it ExchangeRate}^{USD}$",
-    "TVL_share": "${\it LiquidityShare}$",
-    "exceedance": "${\it exceedance}^{USD}$",
-    "Gas_fee_volatility": "${\it \sigma}_{\it Gas}$",
-    "avg_eigenvector_centrality": "${\it AvgEigenCent}$",
-    "stableshare": "${\it StableShare}$",
-    "boom": "${\it DeFiboom}$",
-    "bust": "${\it DeFibust}$",
-    "stablecoin_deviation": "${\it StableDepeg}$",
-    "pegging_degree": "${\it PeggingDegree}$",
-    "depegging_degree": "${\it DepeggingDegree}$",
-    "pegging_degree_uppeg": "${\it PeggingDegree}^{Uppeg}$",
-    "pegging_degree_downpeg": "${\it PeggingDegree}^{Downpeg}$",
-    "depegging_degree_uppeg": "${\it DepeggingDegree}^{Uppeg}$",
-    "depegging_degree_downpeg": "${\it DepeggingDegree}^{Downpeg}$",
-    "mcap_share": "${\it MCapShare}$",
-    # Drop
-    "corr_sentiment": "${\it CorrSent}$",
-}
-
-NAMING_DIC_HERFINDAHL = {
-    "herfindahl_volume": "${\it HHIVolume}$",
-    "herfindahl_inflow_centrality": "${\it HHIEigenCent}^{In}$",
-    "herfindahl_outflow_centrality": "${\it HHIEigenCent}^{Out}$",
-    "herfindahl_betweenness_centrality_count": "${\it HHIBetwCent}^C$",
-    "herfindahl_betweenness_centrality_volume": "${\it HHIBetwCent}^V$",
-    "herfindahl_tvl": "${\it HHITVL}$",
-    "total_volumes": "${\it TotalVolume}$",
-    "S&P": "${\it R}^{USD}_{SP}$",
-    "S&P_volatility": "${\it \sigma}^{USD}_{SP}$",
-    "Gas_fee": "${\it GasPrice}$",
-    "Gas_fee_volatility": "${\it \sigma}_{Gas}$",
-    "boom": "${\it DeFiboom}$",
-    "bust": "${\it DeFibust}$",
-}
-
-# merge all naming dics above
-# TODO: clean up - only need one naming dict
-NAMING_DICT_OLD = {
-    **NAMING_DICT_OLD,
-    **NAMING_DIC_PROPERTIES_OF_DOMINANCE,
-    **NAMING_DIC_HERFINDAHL,
-}
-
-
-# NAMING_DICT = {
-#     "TVL_share": "${\it LiquidityShare}$",
-#     "Inflow_centrality": "${\it EigenCent}^{In}$",
-#     "Outflow_centrality": "${\it EigenCent}^{Out}$",
-#     "Volume_share": "${\it VShare}$",
-#     "volume_in_share": "${\it VShare}^{\it In}$",
-#     "volume_out_share": "${\it VShare}^{\it Out}$",
-#     "Borrow_share": "${\it BorrowShare}$",
-#     "Supply_share": "${\it SupplyShare}$",
-#     "betweenness_centrality_count": "${\it BetwCent}^C$",
-#     "betweenness_centrality_volume": "${\it BetwCent}^V$",
-#     "cov_gas": "${\it CovGas}$",
-#     "cov_sp": "${\it CovSP}$",
-#     "cov_eth": "${\it CovETH}$",
-#     "log_return": "${R}^{\it USD}$",
-#     "std": "${\it \sigma}^{USD}$",
-#     "borrow_rate": "${\it BorrowAPY}^{USD}$",
-#     "supply_rates": "${\it SupplyAPY}^{USD}$",
-# }
-
-# Initialize constants
-NAMING_DIC_PROPERTIES_OF_DOMINANCE_LAG = {
-    # Dominance
-    "${\it VShare}$": "${\it-1 VShare}$",
-    "${\it VShare}^{\it In}$": "${\it-1 VShare}^{\it-1 In}$",
-    "${\it VShare}^{\it Out}$": "${\it-1 VShare}^{\it-1 Out}$",
-    # Eigenvector
-    "${\it EigenCent}^{In}$": "${\it-1 EigenCent}^{In}$",
-    "${\it EigenCent}^{Out}$": "${\it-1 EigenCent}^{Out}$",
-    # Betweenness
-    "${\it BetwCent}^C$": "${\it-1 BetwCent}^C$",
-    "${\it BetwCent}^V$": "${\it-1 BetwCent}^V$",
-    # Store
-    "${\it BorrowShare}$": "${\it-1 BorrowShare}$",
-    "${\it SupplyShare}$": "${\it-1 SupplyShare}$",
-    "${\it BorrowAPY}^{USD}$": "${\it-1 BorrowAPY}^{USD}$",
-    "${\it SupplyAPY}^{USD}$": "${\it-1 SupplyAPY}^{USD}$",
-    "${\it Beta}$": "${\it-1 Beta}$",
-    "${\it \sigma}^{USD}$": "${\it-1 \sigma}^{USD}$",
-    "${\it \mu}^{USD}$": "${\it-1 \mu}^{USD}$",
-    # Other
-    "${\it CorrGas}$": "${\it-1 CorrGas}$",
-    "${\it CorrSP}$": "${\it-1 CorrSP}$",
-    "${\it CorrETH}$": "${\it-1 CorrETH}$",
-    "${R}^{\it USD}$": "${R}^{\it-1 USD}$",
-    "${\it MCap}^{USD}$": "${\it-1 MCap}^{USD}$",
-    "${\i Nonstable}$": "${\i Nonstable}$",
-    "${\i IsWETH}$": "${\i IsWETH}$",
-    "${\it GasPrice}$": "${\it-1 GasPrice}$",
-    "${\it ExchangeRate}^{USD}$": "${\it-1 ExchangeRate}^{USD}$",
-    "${\it LiquidityShare}$": "${\it-1 LiquidityShare}$",
-    "${\it exceedance}^{USD}$": "${\it-1 exceedance}^{USD}$",
-    "${\it \sigma}_{Gas}$": "${\it-1 \sigma}_{Gas}$",
-    # Drop
-    "${\it CorrSent}$": "${\it-1 CorrSent}$",
-}
-
-NAMING_DIC_SPECIFICATION_LAG = {
-    "${\it AvgEigenCent}$": "${\it-7 AvgEigenCent}$",
-    "${\it EigenCent}^{In}$": "${\it-7 EigenCent}^{In}$",
-    "${\it EigenCent}^{Out}$": "${\it-7 EigenCent}^{Out}$",
-    "${\it BetwCent}^C$": "${\it-7 BetwCent}^C$",
-    "${\it BetwCent}^V$": "${\it-7 BetwCent}^V$",
-    "${\it VShare}$": "${\it-7 VShare}$",
-    "${\it VShare}^{\it In}$": "${\it-7 VShare}^{\it-7 In}$",
-    "${\it VShare}^{\it Out}$": "${\it-7 VShare}^{\it-7 Out}$",
-    "${\i Stable}$": "${\i Stable}$",
-    "${\it PeggingDegree}$": "${\it-7 PeggingDegree}$",
-    "${\it DepeggingDegree}$": "${\it-7 DepeggingDegree}$",
-    "${\it PeggingDegree}^{Uppeg}$": "${\it-7 PeggingDegree}^{Uppeg}$",
-    "${\it PeggingDegree}^{Downpeg}$": "${\it-7 PeggingDegree}^{Downpeg}$",
-    "${\it DepeggingDegree}^{Uppeg}$": "${\it-7 DepeggingDegree}^{Uppeg}$",
-    "${\it DepeggingDegree}^{Downpeg}$": "${\it-7 DepeggingDegree}^{Downpeg}$",
-    "${\it CorrGas}$": "${\it-7 CorrGas}$",
-    "${\it CorrETH}$": "${\it-7 CorrETH}$",
-    "${\it CorrSP}$": "${\it-7 CorrSP}$",
-    "${\it \sigma}^{USD}$": "${\it-7 \sigma}^{USD}$",
-    "${\it StableShare}$": "${\it-7 StableShare}$",
-    "${\it SupplyShare}$": "${\it-7 SupplyShare}$",
-    "${\it \ln MCap}^{USD}$": "${\it-7 \ln MCap}^{USD}$",
-    "${\it MCapShare}$": "${\it-7 MCapShare}$",
-}
-
-NAMING_DIC_HERFINDAHL_LAG = {
-    "${\it HHIVolume}$": "${\it-1 HHIVolume}$",
-    "${\it HHIEigenCent}^{In}$": "${\it-1 HHIEigenCent}^{In}$",
-    "${\it HHIEigenCent}^{Out}$": "${\it-1 HHIEigenCent}^{Out}$",
-    "${\it HHIBetwCent}^C$": "${\it-1 HHIBetwCent}^C$",
-    "${\it HHIBetwCent}^V$": "${\it-1 HHIBetwCent}^V$",
-    "${\it TotalVolume}$": "${\it-1 TotalVolume}$",
-    "${\it R}^{USD}_{SP}$": "${\it-1 R}^{USD}_{SP}$",
-    "${\it \sigma}^{USD}_{SP}$": "${\it-1 \sigma}^{USD}_{SP}$",
-    "${\it GasPrice}$": "${\it-1 GasPrice}$",
-    "${\it \sigma}_{Gas}$": "${\it-1 \sigma}_{Gas}$",
+    "norm_clique_num": "{\it NumClique / NumTxn}",
+    "vol_undirected_full_len_share": "{\it VShare}^{\it Ulti}",
+    "vol_inter_full_len_share": "{\it VShare}^{\it Betw}",
 }

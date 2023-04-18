@@ -1,7 +1,6 @@
 # get the regression panel dataset from pickled file
 import pandas as pd
-
-from environ.constants import DATA_PATH, SAMPLE_PERIOD, TABLE_PATH
+from environ.constants import PROCESSED_DATA_PATH, SAMPLE_PERIOD, TABLE_PATH
 from environ.tabulate.render_regression import (
     construct_regress_vars,
     render_regress_table,
@@ -13,17 +12,17 @@ from environ.utils.variable_constructer import (
 )
 
 dependent_variables = [
-    "herfindahl_volume",
+    "herfindahl_volume_ultimate",
     "herfindahl_betweenness_centrality_count",
     "herfindahl_betweenness_centrality_volume",
-    # "herfindahl_tvl",
+    "herfindahl_vol_inter_full_len",
+    "herfindahl_volume",
 ]
 
 iv_chunk_list_unlagged = [
     [
         [
             "is_boom",
-            # "avg_cluster",
             "total_volumes",
             name_log_return_vol_variable(
                 "S&P", rolling_window_return=1, rolling_window_vol=30
@@ -32,6 +31,8 @@ iv_chunk_list_unlagged = [
             name_log_return_vol_variable(
                 "gas_price_usd", rolling_window_return=1, rolling_window_vol=30
             ),
+            "avg_cluster",
+            "norm_clique_num",
             # "const",
         ]
     ],
@@ -39,7 +40,9 @@ iv_chunk_list_unlagged = [
 
 
 # Get the regression panel dataset from pickled file
-herf_panel = pd.read_pickle(DATA_PATH / "processed" / "herf_panel_merged.pkl")
+herf_panel = pd.read_pickle(
+    PROCESSED_DATA_PATH / "herf_panel_merged.pickle.zip", compression="zip"
+)
 
 herf_panel = lag_variable_columns(
     herf_panel, dependent_variables + iv_chunk_list_unlagged[0][0], time_variable="Date"
@@ -60,10 +63,12 @@ reg_combi = construct_regress_vars(
 )
 
 
-# make is_boom numeric
-herf_panel["is_boom"] = herf_panel["is_boom"].astype(int)
-# herf_panel["const"] = 1
+# convert all the values to int for all the boolean values
+for col in herf_panel.columns:
+    if herf_panel[col].dtype == "bool":
+        herf_panel[col] = herf_panel[col].astype(int)
 
+# herf_panel["const"] = 1
 LAG_DV_NAME = "\it HHI_{t-1}"
 
 result_full = render_regress_table(

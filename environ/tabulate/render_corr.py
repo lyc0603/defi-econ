@@ -1,6 +1,7 @@
 """
 Script to render the table of correlation heatmap.
 """
+from pathlib import Path
 from typing import Literal, Optional
 
 import matplotlib.pyplot as plt
@@ -8,7 +9,7 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import colors
 
-from environ.constants import FIGURE_PATH, TABLE_PATH
+from environ.constants import FIGURE_PATH, DATA_PATH
 from environ.utils.variable_constructer import (
     lag_variable_columns,
     map_variable_name_latex,
@@ -108,7 +109,7 @@ def render_corr_cov_tab(
 
 def render_corr_cov_figure(
     corr_cov_tab: pd.DataFrame,
-    file_name: str,
+    file_name: str | Path,
 ):
     """
     Function to render the correlation table figure.
@@ -152,7 +153,7 @@ def render_corr_cov_figure(
 
 if __name__ == "__main__":
     # get the regressuib panel dataset from pickle file
-    regression_panel = pd.read_pickle(TABLE_PATH / "reg_panel.pkl")
+    regression_panel = pd.read_pickle(DATA_PATH / "reg_panel.pkl")
 
     # columns to be included in the correlation table
     corr_columns = [
