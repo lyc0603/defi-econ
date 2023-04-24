@@ -223,6 +223,7 @@ def log_return(
     """
 
     data = data.sort_values(by=time_variable)
+
     data = data.set_index(time_variable).resample("D").asfreq().reset_index()
 
     if isinstance(variable, str):

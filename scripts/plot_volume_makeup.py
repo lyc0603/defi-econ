@@ -9,7 +9,6 @@ from environ.constants import FIGURE_PATH, PROCESSED_DATA_PATH
 panel_main = pd.read_pickle(
     PROCESSED_DATA_PATH / "panel_main.pickle.zip", compression="zip"
 )
-
 # calculate the ulti_volume_fraction group by date
 panel_main = (
     panel_main.groupby(["Date"])

@@ -34,6 +34,8 @@ PLOT_DATA_PATH: Path = PROJECT_ROOT / "data" / "data_plot"
 COMPOUND_DATA_PATH: Path = PROJECT_ROOT / "data" / "data_compound"
 CACHE_PATH: Path = PROJECT_ROOT / ".cache"
 TEST_RESULT_PATH: Path = PROJECT_ROOT / "test_results"
+UNISWAP_V2_DATA_PATH: Path = PROJECT_ROOT / "data" / "data_uniswap_v2"
+UNISWAP_V3_DATA_PATH: Path = PROJECT_ROOT / "data" / "data_uniswap_v3"
 
 # Information fo variables to be merged into the main panel
 PANEL_VAR_INFO = {
@@ -118,6 +120,15 @@ PANEL_VAR_INFO = {
                 "eigenvector_centrality": "eigen_centrality_undirected",
             },
         },
+        {
+            "data_path": NETWORK_DATA_PATH
+            / "merged"
+            / "total_eigen_centrality_undirected",
+            "data_col": ["total_eigen_centrality_undirected"],
+            "rename_dict": {
+                "eigenvector_centrality": "total_eigen_centrality_undirected",
+            },
+        },
     ],
     "corr_var": {
         "corr_gas": "gas_price_usd",
@@ -147,11 +158,12 @@ HERFIN_VAR_INFO = {
 }
 
 DEPENDENT_VARIABLES = [
-    "volume_ultimate",
+    "volume_ultimate_share",
     "eigen_centrality_undirected",
     "vol_inter_full_len_share",
     "betweenness_centrality_volume",
     "betweenness_centrality_count",
+    "total_eigen_centrality_undirected",
     "Volume_share",
 ]
 
@@ -415,13 +427,14 @@ FIAT_LIST = list(set([v["underlying"] for v in STABLE_DICT.values()]))
 
 ALL_NAMING_DICT = {
     "eigen_centrality_undirected": "{\it EigenCent^{\it Ulti}}",
+    "total_eigen_centrality_undirected": "{\it EigenCent}",
     "TVL_share": "{\it LiquidityShare}",
     "Inflow_centrality": "{\it EigenCent}^{In}",
     "Outflow_centrality": "{\it EigenCent}^{Out}",
     "Volume_share": "{\it VShare}",
     "volume_in_share": "{\it VShare}^{\it In}",
     "volume_out_share": "{\it VShare}^{\it Out}",
-    "volume_ultimate": "{\it {VShare}^{\it Ulti}}",
+    "volume_ultimate_share": "{\it {VShare}^{\it Ulti}}",
     # "volume_
     "Borrow_share": "{\it BorrowShare}",
     "Supply_share": "{\it SupplyShare}",
@@ -483,4 +496,5 @@ ALL_NAMING_DICT = {
     "norm_clique_num": "{\it NumClique / NumTxn}",
     "vol_undirected_full_len_share": "{\it VShare}^{\it Ulti}",
     "vol_inter_full_len_share": "{\it VShare}^{\it Betw}",
+    "dollar_exchange_rate_log_return_1": "\ln R",
 }
