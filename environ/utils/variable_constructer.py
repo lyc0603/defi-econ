@@ -100,7 +100,7 @@ def map_variable_name_latex(variable: str) -> str:
     formatted_variables = [format_variable(var) for var in variables]
 
     # Combine all with ":" for interaction variables, accommodating for the case of 3 variables
-    return f'${":".join(formatted_variables)}$'
+    return f'{":".join(formatted_variables)}'
 
 
 def column_manipulator(
