@@ -1,6 +1,17 @@
+"""
+Script to implement asset pricing using dominance as indicator
+"""
+
 import pandas as pd
-from environ.constants import PROCESSED_DATA_PATH, DEPENDENT_VARIABLES
-from environ.utils.variable_constructer import ma_variable_columns
+from environ.process.asset_pricing.double_sorting import (
+    asset_pricing,
+)
+from environ.constants import (
+    PROCESSED_DATA_PATH,
+    FIGURE_PATH,
+    DEPENDENT_VARIABLES,
+    STABLE_DICT,
+)
 
 
 # load the regression panel dataset
@@ -8,22 +19,20 @@ reg_panel = pd.read_pickle(
     PROCESSED_DATA_PATH / "panel_main.pickle.zip", compression="zip"
 )
 
-reg_panel = ma_variable_columns(
-    reg_panel,
-    DEPENDENT_VARIABLES,
-    time_variable="Date",
-    entity_variable="Token",
-    rolling_window_ma=30,
-)
+stable_nonstable_info = {
+    "stablecoin": reg_panel[reg_panel["Token"].isin(STABLE_DICT.keys())],
+    "nonstablecoin": reg_panel[~reg_panel["Token"].isin(STABLE_DICT.keys())],
+}
 
-#  find medium value of all tokens' 30 day moving average for each day
-
-reg_panel[[f"{var}_median" for var in DEPENDENT_VARIABLES]] = reg_panel.groupby("Date")[
-    DEPENDENT_VARIABLES
-].transform("median")
-
-# weekly / biweekly / monthly - rebalancing
-# dominance - yield (long top 10%, short bottom 90%)
-
-# stablecoin (convenience yield)
-# non-stablecoin (price)
+# iterate through the dominance
+for panel_info, df_panel in stable_nonstable_info.items():
+    for dominance in DEPENDENT_VARIABLES:
+        for frequency in [14, 30]:
+            asset_pricing(
+                df_panel,
+                FIGURE_PATH / f"{panel_info}_{dominance}_{frequency}.pdf",
+                dominance,
+                "supply_rates",
+                0.1,
+                frequency,
+            )
